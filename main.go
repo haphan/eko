@@ -3,29 +3,30 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/handlers"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/gorilla/handlers"
 )
 
-type Echo struct {
+type echo struct {
 	Method     string                 `json:"method"`
 	Path       string                 `json:"path"`
-	Headers    Header                 `json:"headers"`
+	Headers    header                 `json:"headers"`
 	Body       string                 `json:"body"`
 	HostName   string                 `json:"hostname"`
 	SubDomains []string               `json:"subdomains"`
 	Query      map[string][]string    `json:"query"`
 	Protocol   string                 `json:"protocol"`
 	RemoteAddr string                 `json:"remoteaddr"`
-	Os         map[string]interface{} `json:"os"'`
+	Os         map[string]interface{} `json:"os"`
 }
 
-type Header map[string][]string
+type header map[string][]string
 
 type server struct {
 	logger *log.Logger
@@ -38,9 +39,13 @@ type bodyRecorder struct {
 }
 
 func (w *bodyRecorder) Write(b []byte) (int, error) {
-	count, err := w.ResponseWriter.Write(b)
-	w.Writer.Write(b)
-	return count, err
+	n, err := w.Writer.Write(b)
+
+	if err != nil {
+		return n, err
+	}
+
+	return w.ResponseWriter.Write(b)
 }
 
 func main() {
@@ -83,7 +88,7 @@ func (s *server) withLogging(h http.HandlerFunc) http.HandlerFunc {
 		h(&recorder, r)
 	}
 }
-func (h Header) MarshalJSON() ([]byte, error) {
+func (h header) MarshalJSON() ([]byte, error) {
 	simple := make(map[string]string)
 	for k, v := range h {
 		simple[strings.ToLower(k)] = strings.Join(v, ", ")
@@ -91,7 +96,7 @@ func (h Header) MarshalJSON() ([]byte, error) {
 	return json.Marshal(simple)
 }
 
-func buildEcho(r *http.Request) Echo {
+func buildEcho(r *http.Request) echo {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 
 	if err != nil {
@@ -103,11 +108,11 @@ func buildEcho(r *http.Request) Echo {
 	osInfo := make(map[string]interface{})
 	osInfo["hostname"], _ = os.Hostname()
 
-	e := Echo{
+	e := echo{
 		Path:       r.RequestURI,
 		Body:       bodyString,
 		Method:     r.Method,
-		Headers:    Header(r.Header),
+		Headers:    header(r.Header),
 		SubDomains: strings.Split(strings.Split(r.Host, ":")[0], "."),
 		HostName:   r.Host,
 		Os:         osInfo,
