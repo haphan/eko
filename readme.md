@@ -1,5 +1,9 @@
 # haphan/eko
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/haphan/eko)](https://goreportcard.com/report/github.com/haphan/eko)
+
+
+## Example
 ```bash
 ▶ curl -Ss -X POST \
  -d "foo=bar&a=b" \
@@ -35,3 +39,7 @@
   }
 }
 ```
+
+## Todo
+
+- Add `Dockerfile`
